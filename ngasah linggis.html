@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulator Mengasah Linggis</title>
+
+<style>
+body{
+    margin:0;
+    background:#222;
+    color:white;
+    text-align:center;
+    font-family:Arial, sans-serif;
+}
+
+canvas{
+    background:#87CEEB;
+    border:3px solid white;
+    margin-top:10px;
+}
+
+button{
+    padding:10px 20px;
+    font-size:18px;
+    margin-top:10px;
+    cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<h1>🔨 Simulator Mengasah Linggis</h1>
+
+<canvas id="gameCanvas" width="900" height="500"></canvas>
+
+<br>
+
+<button onclick="sharpenCrowbar()">ASAH LINGGIS</button>
+
+<h2>
+Skor: <span id="score">0</span> |
+Ketajaman: <span id="sharpness">0</span>%
+</h2>
+
+<script>
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let score = 0;
+let sharpness = 0;
+let handOffset = 0;
+let sparks = [];
+let wheelAngle = 0;
+
+function sharpenCrowbar(){
+
+    if(sharpness >= 100) return;
+
+    score++;
+    sharpness++;
+
+    document.getElementById("score").textContent = score;
+    document.getElementById("sharpness").textContent = sharpness;
+
+    handOffset = 20;
+
+    for(let i=0;i<12;i++){
+        sparks.push({
+            x:600,
+            y:260,
+            dx:Math.random()*6+1,
+            dy:(Math.random()-0.5)*6,
+            life:30
+        });
+    }
+}
+
+document.addEventListener("keydown", e => {
+    if(e.code === "Space"){
+        e.preventDefault();
+        sharpenCrowbar();
+    }
+});
+
+function drawPlayer(){
+
+    // kepala
+    ctx.fillStyle = "#FFD39B";
+    ctx.beginPath();
+    ctx.arc(250,180,25,0,Math.PI*2);
+    ctx.fill();
+
+    // badan
+    ctx.fillStyle = "#0077cc";
+    ctx.fillRect(235,205,30,70);
+
+    // kaki
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 6;
+
+    ctx.beginPath();
+    ctx.moveTo(245,275);
+    ctx.lineTo(225,340);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(255,275);
+    ctx.lineTo(275,340);
+    ctx.stroke();
+
+    // tangan kiri
+    ctx.beginPath();
+    ctx.moveTo(235,220);
+    ctx.lineTo(180,240);
+    ctx.stroke();
+
+    // tangan kanan animasi
+    ctx.beginPath();
+    ctx.moveTo(265,220);
+    ctx.lineTo(350 + handOffset,250);
+    ctx.stroke();
+
+    // linggis
+    const metal = Math.min(255, 100 + sharpness);
+
+    ctx.strokeStyle =
+        `rgb(${metal},${metal},${metal})`;
+
+    ctx.lineWidth = 12;
+
+    ctx.beginPath();
+    ctx.moveTo(350 + handOffset,250);
+    ctx.lineTo(600,260);
+    ctx.stroke();
+}
+
+function drawGrindingWheel(){
+
+    ctx.save();
+
+    ctx.translate(650,280);
+    ctx.rotate(wheelAngle);
+
+    ctx.fillStyle = "#666";
+
+    ctx.beginPath();
+    ctx.arc(0,0,70,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle="#333";
+    ctx.lineWidth=4;
+
+    for(let i=0;i<8;i++){
+
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.lineTo(70,0);
+        ctx.stroke();
+
+        ctx.rotate(Math.PI/4);
+    }
+
+    ctx.restore();
+}
+
+function drawWorkbench(){
+
+    ctx.fillStyle="#6a4a2c";
+
+    ctx.fillRect(580,330,140,15);
+    ctx.fillRect(600,345,15,70);
+    ctx.fillRect(685,345,15,70);
+}
+
+function drawSparks(){
+
+    for(let i=sparks.length-1;i>=0;i--){
+
+        let p = sparks[i];
+
+        p.x += p.dx;
+        p.y += p.dy;
+        p.life--;
+
+        ctx.fillStyle =
+            `rgba(255,180,0,${p.life/30})`;
+
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,4,0,Math.PI*2);
+        ctx.fill();
+
+        if(p.life <= 0){
+            sparks.splice(i,1);
+        }
+    }
+}
+
+function drawProgressBar(){
+
+    ctx.fillStyle="white";
+    ctx.font="20px Arial";
+    ctx.fillText("Ketajaman",20,35);
+
+    ctx.strokeStyle="white";
+    ctx.strokeRect(20,45,300,30);
+
+    ctx.fillStyle="lime";
+    ctx.fillRect(
+        20,
+        45,
+        (sharpness/100)*300,
+        30
+    );
+
+    if(sharpness >= 100){
+
+        ctx.fillStyle="gold";
+        ctx.font="bold 40px Arial";
+
+        ctx.fillText(
+            "🏆 LINGGIS SIAP DIPAKAI!",
+            220,
+            100
+        );
+    }
+}
+
+function drawGround(){
+    ctx.fillStyle="#44aa44";
+    ctx.fillRect(0,400,900,100);
+}
+
+function update(){
+
+    ctx.clearRect(0,0,900,500);
+
+    drawGround();
+    drawWorkbench();
+    drawGrindingWheel();
+    drawPlayer();
+    drawSparks();
+    drawProgressBar();
+
+    wheelAngle += 0.05;
+
+    if(handOffset > 0){
+        handOffset -= 1;
+    }
+
+    requestAnimationFrame(update);
+}
+
+update();
+
+</script>
+
+</body>
+</html>
